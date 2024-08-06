@@ -36,8 +36,8 @@ public class TestCase {
                 StopWatch stopWatch = new StopWatch();
                 LongSummaryStatistics stats = new LongSummaryStatistics();
                 for (int i = 0; i < REQUEST_COUNT; i++) {
-                    pixel.setX(ThreadLocalRandom.current().nextInt(0, 100));
-                    pixel.setY(ThreadLocalRandom.current().nextInt(0, 100));
+                    pixel.setX(14);
+                    pixel.setY(11);
                     stopWatch.start();
                     try {
                         ResultResponse res = rest.postForObject(URL, pixel, ResultResponse.class);

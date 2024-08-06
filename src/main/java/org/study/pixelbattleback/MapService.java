@@ -55,6 +55,11 @@ public class MapService {
      * @return
      */
     public synchronized boolean draw(PixelRequest pixel) {
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         int x = pixel.getX();
         int y = pixel.getY();
         if (x < 0 || x >= width || y < 0 || y >= height) {
