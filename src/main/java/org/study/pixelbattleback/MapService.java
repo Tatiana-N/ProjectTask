@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class MapService {
@@ -24,7 +25,7 @@ public class MapService {
 
     private final int height;
 
-    private final int[] colors;
+    private final AtomicInteger[] colors;
 
     private boolean isChanged;
 
@@ -45,7 +46,7 @@ public class MapService {
         }
         width = tmp.getWidth();
         height = tmp.getHeight();
-        colors = tmp.getColors();
+        colors = Arrays.stream(tmp.getColors()).mapToObj(AtomicInteger::new).toArray(AtomicInteger[]::new);
     }
 
     /**
@@ -54,13 +55,16 @@ public class MapService {
      * @param pixel
      * @return
      */
-    public synchronized boolean draw(PixelRequest pixel) {
+    public boolean draw(PixelRequest pixel) {
         int x = pixel.getX();
         int y = pixel.getY();
         if (x < 0 || x >= width || y < 0 || y >= height) {
             return false;
         }
-        colors[y * width + x] = pixel.getColor();
+		    AtomicInteger color = colors[y * width + x];
+		    while (!color.compareAndSet(color.get(), pixel.getColor())) {
+			    color = colors[y * width + x];
+		    }
         isChanged = true;
         return true;
     }
@@ -70,8 +74,9 @@ public class MapService {
      *
      * @return
      */
-    private synchronized int[] getColors() {
-        return Arrays.copyOf(colors, colors.length);
+    private int[] getColors() {
+        AtomicInteger[] atomicIntegers = Arrays.copyOf(colors, colors.length);
+        return  Arrays.stream(atomicIntegers).mapToInt(AtomicInteger::get).toArray();
     }
 
     public Map getMap() {
@@ -86,7 +91,7 @@ public class MapService {
      * Периодически сохраняем карту в файл
      */
     @Scheduled(fixedDelay = 15, timeUnit = TimeUnit.SECONDS)
-    public synchronized void writeToFile() {
+    public void writeToFile() {
         if (!isChanged) {
             return;
         }
@@ -99,6 +104,4 @@ public class MapService {
             logger.error(e.getMessage(), e);
         }
     }
-
-
 }
